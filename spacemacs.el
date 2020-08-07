@@ -47,6 +47,7 @@ file URL a link but we'll figure that out eventually I guess."
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
      ;; `M-m f e R' (Emacs style) to install them.
      ;; ----------------------------------------------------------------
+     ansible
      (auto-completion :variables
                       auto-completion-return-key-behavior 'complete
                       auto-completion-tab-key-behavior 'cycle
@@ -60,7 +61,7 @@ file URL a link but we'll figure that out eventually I guess."
                       auto-completion-enable-sort-by-usage nil)
      better-defaults
      colors
-     conda
+     ;; conda
      csv
      django
      emacs-lisp
@@ -93,6 +94,7 @@ file URL a link but we'll figure that out eventually I guess."
      typescript
      version-control
      yaml)
+
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
@@ -431,17 +433,14 @@ layers configuration.
 This is the place where most of your configurations should be done. Unless it is
 explicitly specified that a variable should be set before a package is loaded,
 you should place your code here."
-  ;; use lsp instead
-  ;; (global-company-mode t)
-  ;;(global-aggressive-indent-mode t)
   (setq auto-save-visted-mode t)
   (global-evil-matchit-mode t)
-  (global-evil-mc-mode t)
   (global-evil-visualstar-mode t)
   (global-flycheck-mode t)
   (setq ediff-use-last-dir t)
   (add-hook 'lisp-interaction-mode
-            (evil-cleverparens-mode t)))
+            (evil-cleverparens-mode t))
+  (global-company-mode t))
 
 (defun python-things()
   """Keybindings and settings.
@@ -456,9 +455,34 @@ Something.
               (local-set-key "\C-cd" 'pytest-directory)
               (local-set-key "\C-cpa" 'pytest-pdb-all)
               (local-set-key "\C-cpm" 'pytest-pdb-module)
-              (local-set-key "\C-cp." 'pytest-pdb-one))))
+              (local-set-key "\C-cp." 'pytest-pdb-one)))
 
-(python-things)
+  (use-package elpy
+    :hook python-mode
+    :config
+    '(blacken-allow-py36 t)
+    '(blacken-executable "pipenv run black")
+    '(elpy-modules
+      (quote
+       (elpy-module-company elpy-module-eldoc elpy-module-flymake elpy-module-folding elpy-module-pyvenv elpy-module-highlight-indentation elpy-module-yasnippet elpy-module-autodoc elpy-module-sane-defaults)))
+    '(elpy-shell-add-to-shell-history t)
+    '(elpy-test-pytest-runner-command (quote ("python -m pytest")))
+    '(elpy-test-runner (quote elpy-test-pytest-runner))
+    '(blacken-line-length 88)))
+
+(defun web-conf ()
+  """Web configuration.
+"""
+  (setq-default
+   ;; js2-mode
+   js2-basic-offset 2
+   ;; web-mode
+   css-indent-offset 2
+   web-mode-markup-indent-offset 2
+   web-mode-css-indent-offset 2
+   web-mode-code-indent-offset 2
+   web-mode-attr-indent-offset 2)
+  )
 
 (defun some-company-stuff ()
   """Might as well put a docstring.
@@ -466,39 +490,71 @@ Something.
   (use-package company
     :hook 'elisp-mode))
 
-(some-company-stuff)
 
-(defun elpy-stuff ()
-  """Configure elpy.
-"""
-  (use-package elpy
-    :hook python-mode))
+(defun git-conf ()
+  (setq-default git-magit-status-fullscreen t)
+  (setq magit-repository-directories
+        '(("~/projects/" . 2) ("~/src/" . 2))))
 
-(elpy-stuff)
+(defun your_spacemacs/lsp_setup()
+
+  (use-package lsp-ui
+    :after lsp-mode
+    :diminish
+    :commands lsp-ui-mode
+    :custom-face
+    (lsp-ui-doc-background ((t (:background nil))
+                            (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
+                            :bind (:map lsp-ui-mode-map
+                                        ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+                                        ([remap xref-find-references] . lsp-ui-peek-find-references)
+                                        ("C-c u" . lsp-ui-imenu))
+                            :custom
+                            (lsp-ui-doc-enable t)
+                            (lsp-ui-doc-header t)
+                            (lsp-ui-doc-include-signature t)
+                            (lsp-ui-doc-position 'top)
+                            (lsp-ui-doc-border (face-foreground 'default))
+                            (lsp-ui-sideline-enable nil)
+                            (lsp-ui-sideline-ignore-duplicate t)
+                            (lsp-ui-sideline-show-code-actions nil)
+                            :config
+                            (setq lsp-ui-doc-max-height 20
+                                  lsp-ui-doc-max-width 50
+                                  lsp-ui-sideline-ignore-duplicate t
+                                  ;; Use lsp-ui-doc-webkit only in GUI
+                                  lsp-ui-doc-use-webkit t
+                                  lsp-ui-peek-always-show t)
+                            ;; WORKAROUND Hide mode-line of the lsp-ui-imenu buffer
+                            ;; https://github.com/emacs-lsp/lsp-ui/issues/243
+                            (defadvice lsp-ui-imenu (:after hide-lsp-ui-imenu-mode-line activate)
+                              (setq mode-line-format nil))))))
+
 
 (defun dotspacemacs/emacs-custom-settings ()
   "Emacs custom settings.
 This is an auto-generated function, do not modify its content directly, use
 Emacs customize menu instead.
 This function is called at the very end of Spacemacs initialization."
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(yasnippet-snippets yapfify yaml-mode xterm-color web-beautify vterm unfill treemacs-magit tide typescript-mode terminal-here smeargle shell-pop rjsx-mode rainbow-mode rainbow-identifiers pytest pyenv-mode py-isort prettier-js pony-mode pippel pipenv pyvenv pip-requirements parinfer orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-cliplink org-brain nodejs-repl mwim multi-term mmm-mode markdown-toc magit-svn magit-section magit-gitflow magit-popup lsp-ui lsp-treemacs lsp-python-ms livid-mode skewer-mode simple-httpd live-py-mode json-navigator hierarchy json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc importmagic epc ctable concurrent ibuffer-projectile htmlize helpful elisp-refs loop helm-pydoc helm-org-rifle helm-org helm-lsp lsp-mode markdown-mode dash-functional helm-gitignore helm-git-grep helm-company helm-c-yasnippet gnuplot gitignore-templates gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ fringe-helper git-gutter+ gh-md fuzzy flyspell-correct-helm flyspell-correct flycheck-pos-tip pos-tip evil-org evil-magit magit git-commit transient eshell-z eshell-prompt-extras esh-help ein with-editor exec-path-from-shell polymode deferred anaphora websocket cython-mode csv-mode conda company-anaconda company color-identifiers-mode browse-at-remote blacken auto-yasnippet yasnippet auto-dictionary anaconda-mode pythonic ac-ispell auto-complete ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin pcre2el password-generator paradox overseer org-superstar open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))
- '(paradox-github-token t))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(package-selected-packages
+     '(elpy tern evil-mc yasnippet-snippets yapfify yaml-mode xterm-color ws-butler writeroom-mode winum which-key web-beautify vterm volatile-highlights vi-tilde-fringe uuidgen use-package unfill treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org tide terminal-here symon symbol-overlay string-inflection spaceline-all-the-icons smeargle shell-pop rjsx-mode restart-emacs rainbow-mode rainbow-identifiers rainbow-delimiters pytest pyenv-mode py-isort prettier-js popwin pony-mode pippel pipenv pip-requirements pcre2el password-generator parinfer paradox overseer orgit org-superstar org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nodejs-repl nameless mwim multi-term move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lsp-ui lsp-treemacs lsp-python-ms lorem-ipsum livid-mode live-py-mode link-hint json-navigator json-mode js2-refactor js-doc indent-guide importmagic ibuffer-projectile hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helpful helm-xref helm-themes helm-swoop helm-pydoc helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-lsp helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu eshell-z eshell-prompt-extras esh-help emr elisp-slime-nav ein editorconfig dumb-jump dotenv-mode diminish devdocs define-word cython-mode csv-mode conda company-anaconda column-enforce-mode color-identifiers-mode clean-aindent-mode centered-cursor-mode browse-at-remote blacken auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+   '(paradox-github-token t))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
 
-;; (provide .custom-settings)
+  ;; (provide .custom-settings)
 ;;; .custom-settings ends here
-)
+  )
 
+;; Vim: set ft=lisp:
 ;; (provides '.spacemacs)
 ;;; .spacemacs ends here
