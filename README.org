@@ -1,0 +1,7 @@
+* README
+
+An init.el for spacemacs. Symlink this in your home directory with
+
+$ ln -s ~/projects/spacelisp/spacemacs.el ~/.spacemacs
+
+Or wherever the project was git cloned.
